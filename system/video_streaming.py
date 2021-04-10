@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
+
 class VideoReader:
     def __init__(self,
                  video_path,
@@ -16,14 +17,22 @@ class VideoReader:
     def start(self):
         frames = self._read_video(self.video_path, self.annotation)
         for counter, img in enumerate(frames):
-            if counter % 5 != 0:
-                continue
-            self._display_slot_location(img, self.annotation, counter / self.fps)
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                break
-            # send one frame of data to cloud per second
-            if counter % self.fps == 0:
-                print('send')
+            if counter % 5 == 0:
+                self._display_slot_location(img, self.annotation, counter / self.fps)
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    break
+            if counter % (5 * self.fps) == 0:
+                img_dict = self._extra_slot(img, self.annotation)
+                yield img_dict, counter / self.fps
+
+    @classmethod
+    def _extra_slot(cls, img, annotation):
+        imgs_dict = {}
+        for slot_id in annotation.keys():
+            x, y, w, h = cls._scale_bounding_box(annotation[slot_id], img)
+            slot_img = img[y: y + h, x: x + w ]
+            imgs_dict[slot_id] = slot_img
+        return imgs_dict
 
     @classmethod
     def _read_video(cls, path, annotation):
@@ -38,7 +47,6 @@ class VideoReader:
             yield img
             counter += 1
         video.release()
-
 
     @classmethod
     def _read_annotation(cls, path, delim=' '):
@@ -57,7 +65,7 @@ class VideoReader:
         fig.set_size_inches(12, 10)
         ax.imshow(img)
         plt.title('{:.2f} secs'.format(secs))
-        for slot in annotation:
+        for slot in annotation.keys():
             x, y, w, h = cls._scale_bounding_box(annotation[slot], img)
             rect = patches.Rectangle((x, y), w, h, linewidth=2, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
@@ -75,4 +83,5 @@ class VideoReader:
         height, width, _ = img.shape
         x, y = coord[0] * width, coord[1] * height
         w, h = coord[2] * width, coord[3] * height
-        return [x - w / 2, y - h / 2, w, h]
+        coord = np.array([(x - w / 2), y - h / 2, w, h])
+        return np.round(coord).astype(np.int32).tolist()

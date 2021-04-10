@@ -1,0 +1,5 @@
+S3_BUCKET_NAME = 'parking-slot-image-bucket'
+DYNAMO_TABLE_NAME = 'parking-lot-database'
+CLASSIFIER_MODEL_PATH = ''
+SIGNATURE_MODEL_PATH = ''
+TEMP_CACHE = '.cache'
