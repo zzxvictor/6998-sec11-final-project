@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+import os
 
 
 class VideoReader:
@@ -11,13 +12,19 @@ class VideoReader:
                  fps=30,
                  delimiter=' '):
         self.video_path = video_path
-        self.annotation = self._read_annotation(annotation_path, delimiter)
+        if os.path.isfile(annotation_path):
+            self.annotation = self._read_annotation(annotation_path, delimiter)
+        else:
+            self.annotation = None
         self.fps = fps
 
     def start(self):
         frames = self._read_video(self.video_path, self.annotation)
         for counter, img in enumerate(frames):
-            if counter % 5 == 0:
+            if self.annotation is None:
+                print('first frame produced. Please use it for annotation!')
+                return
+            if counter % self.fps == 0:
                 self._display_slot_location(img, self.annotation, counter / self.fps)
                 if cv2.waitKey(25) & 0xFF == ord('q'):
                     break

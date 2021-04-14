@@ -1,11 +1,8 @@
-import constants
+from configs import constants
 from utils.data_loader import DataLoader4Detector
 from utils.callbacks import Logger, LrStepDecay
 from vehicle_detection import detector
 import tensorflow.keras as tfk
-import matplotlib.pyplot as plt
-import numpy as np
-
 
 MODEL_NAME = 'simple_cnn'
 if __name__ == '__main__':
@@ -19,7 +16,7 @@ if __name__ == '__main__':
         # plt.show()
     model = detector.get_detector()
 
-    model.compile(loss=tfk.losses.BinaryCrossentropy(from_logits=False),
+    model.compile(loss=tfk.losses.BinaryCrossentropy(from_logits=True),
                   optimizer=tfk.optimizers.Adam(5e-5),
                   metrics=['accuracy'])
 

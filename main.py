@@ -1,12 +1,12 @@
 import argparse
-import config
+from configs import config
 import pathlib
 from system.video_streaming import  VideoReader
 from system.video_analyzer import VideoAnalyzer
 from system.result_printer import Printer
 
 
-# python main.py -vp I:\Data\CNR-EXT-Patches-150x150\video.mp4 -ap I:\Data\CNR-EXT-Patches-150x150\video_annotation.txt
+# python main.py -vp I:\Data\CNR-EXT-Patches-150x150\video_2.mp4 -ap I:\Data\CNR-EXT-Patches-150x150\video_2_annotation.txt
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-vp', dest='vp', type=pathlib.Path)

@@ -1,6 +1,5 @@
 from utils.data_loader import  DataLoader4Signature
-import constants
-import numpy as np
+from configs import constants
 import matplotlib.pyplot as plt
 
 

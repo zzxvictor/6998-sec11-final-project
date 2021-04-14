@@ -1,12 +1,13 @@
 import numpy as np
 import boto3
 from botocore.exceptions import ClientError
-import os
 import cv2
 from decimal import Decimal
 import io
 import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+from system.model_loader import LoadModelTF
+from configs.config import DETECTOR_IMG_SIZE
+
 
 class VideoAnalyzer:
     def __init__(self,
@@ -30,15 +31,18 @@ class VideoAnalyzer:
         self.s3_resource = boto3.resource('s3')
         self._purge()
 
+        self.detector = LoadModelTF.load_model(classifier_path)
+        self.signature = None
+
     def record(self, img_dict, timestamp):
         records = []
         for slot_id in img_dict.keys():
             img = img_dict[slot_id]
-            is_empty = self._classify(img)
+            is_occupied = self._classify(img)
             slot_name = '_'.join([self.video_name, 'slot', slot_id])
             data = self._query_db_by_id(slot_name)
 
-            if not is_empty:
+            if is_occupied:
                 obj_key = self._upload_img_s3(img, slot_name)
                 record = {'slot_id': slot_name,
                           'status': 1,
@@ -59,7 +63,12 @@ class VideoAnalyzer:
         return records
 
     def _classify(self, img):
-        return False
+        # plt.imshow(img)
+        img = cv2.resize(img, DETECTOR_IMG_SIZE) / 255.0 - 0.5
+        pred = self.detector.predict(np.expand_dims(img, axis=0))[0][0]
+        # plt.title(pred)
+        # plt.show()
+        return pred >= 0.5
 
     def _signature(self, img1, img_2):
         return True
