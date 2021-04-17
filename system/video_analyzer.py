@@ -20,11 +20,7 @@ class VideoAnalyzer:
         self.signature_path = signature_path
         self.s3_bucket = s3_bucket
         self.db_table = dynamo_db
-
         self.video_name = video_name
-        self.classifier = self._load_model(self.classifier_path)
-        self.signature = self._load_model(self.signature_path)
-
         self.db = boto3.resource('dynamodb')
         self.table = self.db.Table(self.db_table)
         self.s3_client = boto3.client('s3')
@@ -74,6 +70,7 @@ class VideoAnalyzer:
         return pred >= 0.5
 
     def _signature(self, img1, img_2):
+        self.signature
         return True
 
     def _download_img_s3(self, obj_key):
@@ -112,10 +109,6 @@ class VideoAnalyzer:
                         'slot_id': each['slot_id'],
                     }
                 )
-
-    @classmethod
-    def _load_model(cls, model_path):
-        return None
 
 
 
