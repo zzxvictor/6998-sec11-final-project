@@ -35,39 +35,42 @@ class VideoAnalyzer:
         self.signature = None
 
     def record(self, img_dict, timestamp):
-        records = []
-        for slot_id in img_dict.keys():
-            img = img_dict[slot_id]
-            is_occupied = self._classify(img)
-            slot_name = '_'.join([self.video_name, 'slot', slot_id])
-            data = self._query_db_by_id(slot_name)
+        records, imgs = [], []
+        slot_ids = list(sorted(img_dict.keys()))
+        slot_names = ['_'.join([self.video_name, 'slot', slot_id]) for slot_id in slot_ids]
+        for slot_id in slot_ids:
+            img = cv2.resize(img_dict[slot_id], DETECTOR_IMG_SIZE) / 255.0 - 0.5
+            imgs.append(img)
+        imgs = np.array(imgs)
 
-            if is_occupied:
-                obj_key = self._upload_img_s3(img, slot_name)
-                record = {'slot_id': slot_name,
-                          'status': 1,
-                          'img_path': obj_key,
-                          'since': Decimal(timestamp)}
-                if 'Item' in data:
-                    old_img = self._download_img_s3(data['Item']['img_path'])
-                    is_match = self._signature(img, old_img)
-                    if is_match:
-                        record['since'] = data['Item']['since']
+        slots_is_occupied = self._classify(imgs)
+        db_data = self._batch_query_by_id(slot_names)
+
+        for idx, slot_name in enumerate(slot_names):
+            slot_info = [info for info in db_data[self.db_table]
+                         if info['slot_id'] == slot_name]
+            record = {'slot_id': slot_name,
+                      'since': Decimal(timestamp)}
+            # if occupied
+            if slots_is_occupied[idx]:
+                if len(slot_info) > 0 and slot_info[0]['status'] == 1:
+                    old_img = self._download_img_s3(slot_info[0]['img_path'])
+                    # check if the two images match
+                    if self._signature(imgs[idx], old_img):
+                        record['since'] = slot_info[0]['since']
+                self._upload_img_s3(imgs[idx], slot_name)
+                record['status'] = 1
+                record['img_path'] = slot_name + '.jpg'
+            # not occupied
             else:
-                record = {'slot_id': slot_name,
-                          'status': 0,
-                          'img_path': '',
-                          'since': Decimal(-1)}
+                record['status'] = 0
+                record['img_path'] = ''
             records.append(record)
-        self._update_db_by_id(records)
+        self._batch_update_by_id(records)
         return records
 
-    def _classify(self, img):
-        # plt.imshow(img)
-        img = cv2.resize(img, DETECTOR_IMG_SIZE) / 255.0 - 0.5
-        pred = self.detector.predict(np.expand_dims(img, axis=0))[0][0]
-        # plt.title(pred)
-        # plt.show()
+    def _classify(self, imgs):
+        pred = self.detector.predict(imgs).reshape(-1)
         return pred >= 0.5
 
     def _signature(self, img1, img_2):
@@ -83,20 +86,22 @@ class VideoAnalyzer:
         key = name + '.jpg'
         data = cv2.imencode('.jpg', img)[1].tostring()
         self.s3_resource.Object(self.s3_bucket, key).put(Body=data,ContentType='image/JPG')
-        return key
 
-    def _update_db_by_id(self, records):
+    def _batch_update_by_id(self, records):
         with self.table.batch_writer() as batch:
             for item in records:
                 batch.put_item(Item=item)
 
-    def _query_db_by_id(self, slot_id):
-        try:
-            response = self.table.get_item(Key={'slot_id': slot_id})
-        except ClientError as e:
-            print(e.response['Error']['Message'])
-        else:
-            return response
+    def _batch_query_by_id(self, slots):
+        data = [{'slot_id': slot_id} for slot_id in slots]
+        response = self.db.batch_get_item(
+            RequestItems={
+                self.db_table: {
+                    'Keys': data
+                }
+            }
+        )
+        return response['Responses']
 
     def _purge(self):
         scan = self.table.scan()
