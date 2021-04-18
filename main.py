@@ -26,4 +26,4 @@ if __name__ == '__main__':
     for img_dict, timestamp in feed:
         records = analyzer.record(img_dict, timestamp)
         records = enforcement.check_all(records, timestamp)
-        printer.print(records)
+        #printer.print(records)

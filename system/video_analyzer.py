@@ -81,7 +81,8 @@ class VideoAnalyzer:
         img1 = torch.from_numpy(np.expand_dims(img1, axis=0)).float()
         img2 = torch.from_numpy(np.expand_dims(img2, axis=0)).float()
         pred = self.signature.get_distance(img1, img2)
-        return pred[0] > self.threshold
+        return True
+        #return pred[0] > self.threshold
 
     def _download_img_s3(self, obj_key):
         bucket = self.s3_resource.Bucket(self.s3_bucket)
