@@ -13,6 +13,12 @@ import torch
 
 class LoadModelTorch:
     @classmethod
-    def load_model(cls, model_path):
-        model = torch.load(model_path)
+    def load_model(cls, class_callable, model_path, use_gpu=False):
+        model = class_callable()
+        if use_gpu:
+            model.load_state_dict(torch.load(model_path))
+        else:
+            model.load_state_dict(torch.load(model_path,
+                                             map_location=torch.device('cpu'))
+                                  )
         return model

@@ -36,7 +36,9 @@ class SiameseNetwork(nn.Module):
             nn.Linear(65536, 1024),
             nn.ReLU(inplace=True),
             nn.Dropout2d(p=0.5),
-            nn.Linear(1024, 128)
+            nn.Linear(1024, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 2)
         )
 
     def forward_once(self, x):
@@ -52,3 +54,8 @@ class SiameseNetwork(nn.Module):
         # forward pass of input 2
         output2 = self.forward_once(input2)
         return output1, output2
+
+    def get_distance(self, input1, input2):
+        output1, output2 = self.forward(input1, input2)
+        euclidean_distance = F.pairwise_distance(output1, output2)
+        return euclidean_distance

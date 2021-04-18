@@ -12,6 +12,7 @@ from operator import __add__
 def compute_padding(k):
     return (k - 1) // 2
 
+
 class TorchDetector(nn.Module):
     def __init__(self):
         super(TorchDetector, self).__init__()
@@ -37,8 +38,6 @@ class TorchDetector(nn.Module):
     def forward(self, x):
         # Forward pass
         output = self.cnn1(x)
-        print(output.shape)
         output = output.view(output.size(0), -1)
-        print(output.shape)
         output = self.fc1(output)
         return output

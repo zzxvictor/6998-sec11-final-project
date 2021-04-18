@@ -7,6 +7,9 @@ import io
 import matplotlib.image as mpimg
 from system.model_loader import LoadModelTorch
 from configs.config import DETECTOR_IMG_SIZE
+from vehicle_detection.torch_detector import TorchDetector
+from vehicle_signature.siamese import SiameseNetwork
+import torch
 
 
 class VideoAnalyzer:
@@ -15,7 +18,8 @@ class VideoAnalyzer:
                  signature_path,
                  s3_bucket,
                  dynamo_db,
-                 video_name='100th St'):
+                 video_name='100th St',
+                 threshold=0.5):
         self.classifier_path = classifier_path
         self.signature_path = signature_path
         self.s3_bucket = s3_bucket
@@ -25,11 +29,13 @@ class VideoAnalyzer:
         self.table = self.db.Table(self.db_table)
         self.s3_client = boto3.client('s3')
         self.s3_resource = boto3.resource('s3')
+        self.threshold = threshold
         self._purge()
 
-        #self.detector = LoadModelTF.load_model(classifier_path)
-        self.signature = None
-        #self.signature = LoadModelTorch.load_model(signature_path)
+        self.detector = LoadModelTorch.load_model(TorchDetector,
+                                                  self.classifier_path)
+        self.signature = LoadModelTorch.load_model(SiameseNetwork,
+                                                   self.signature_path)
 
     def record(self, img_dict, timestamp):
         records, imgs = [], []
@@ -39,6 +45,7 @@ class VideoAnalyzer:
             img = cv2.resize(img_dict[slot_id], DETECTOR_IMG_SIZE) / 255.0 - 0.5
             imgs.append(img)
         imgs = np.array(imgs)
+        imgs = np.transpose(imgs, axes=[0, -1, 1, 2])
 
         slots_is_occupied = self._classify(imgs)
         db_data = self._batch_query_by_id(slot_names)
@@ -67,21 +74,25 @@ class VideoAnalyzer:
         return records
 
     def _classify(self, imgs):
-        pred = self.detector.predict(imgs).reshape(-1)
+        pred = self.detector(torch.from_numpy(imgs).float()).reshape(-1)
         return pred >= 0.5
 
-    def _signature(self, img1, img_2):
-        self.signature
-        return True
+    def _signature(self, img1, img2):
+        img1 = torch.from_numpy(np.expand_dims(img1, axis=0)).float()
+        img2 = torch.from_numpy(np.expand_dims(img2, axis=0)).float()
+        pred = self.signature.get_distance(img1, img2)
+        return pred[0] > self.threshold
 
     def _download_img_s3(self, obj_key):
         bucket = self.s3_resource.Bucket(self.s3_bucket)
         obj = bucket.Object(obj_key)
         img = mpimg.imread(io.BytesIO(obj.get()['Body'].read()), 'jp2')
+        img = np.transpose(img, axes=[-1, 0, 1])
         return img
 
     def _upload_img_s3(self, img, name):
         key = name + '.jpg'
+        img = np.transpose(img, axes=[1, 2, 0], )
         data = cv2.imencode('.jpg', img)[1].tostring()
         self.s3_resource.Object(self.s3_bucket, key).put(Body=data,ContentType='image/JPG')
 
