@@ -4,9 +4,10 @@ import pathlib
 from system.video_streaming import  VideoReader
 from system.video_analyzer import VideoAnalyzer
 from system.result_printer import Printer
-
+from system.enforcement_logic import EnforcementLogic
 
 # python main.py -vp I:\Data\CNR-EXT-Patches-150x150\video_2.mp4 -ap I:\Data\CNR-EXT-Patches-150x150\video_2_annotation.txt
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-vp', dest='vp', type=pathlib.Path)
@@ -18,8 +19,11 @@ if __name__ == '__main__':
                              signature_path=config.SIGNATURE_MODEL_PATH,
                              s3_bucket=config.S3_BUCKET_NAME,
                              dynamo_db=config.DYNAMO_TABLE_NAME)
+    enforcement = EnforcementLogic()
+    printer = Printer()
     # start processing the video
     feed = reader.start()
     for img_dict, timestamp in feed:
         records = analyzer.record(img_dict, timestamp)
-        Printer.print(records, timestamp)
+        records = enforcement.check_all(records, timestamp)
+        printer.print(records)

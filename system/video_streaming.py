@@ -74,9 +74,13 @@ class VideoReader:
         plt.title('{:.2f} secs'.format(secs))
         for slot in annotation.keys():
             x, y, w, h = cls._scale_bounding_box(annotation[slot], img)
-            rect = patches.Rectangle((x, y), w, h, linewidth=2, edgecolor='r', facecolor='none')
+            if slot.startswith('NP'):
+                color = 'blue'
+            else:
+                color = 'black'
+            rect = patches.Rectangle((x, y), w, h, linewidth=2, edgecolor=color, facecolor='none')
+            ax.text(x, y - 10, slot, c=color)
             ax.add_patch(rect)
-            ax.text(x, y - 10, 'Slot {}'.format(slot), c='r')
         ax.axis('off')
         ax.margins(0)
         # convert canvas to image

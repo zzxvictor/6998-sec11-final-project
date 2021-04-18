@@ -2,30 +2,38 @@ import os
 
 
 class Printer:
-    @classmethod
-    def print(cls, records, timestamp):
-        slot_status = []
-        for record in records:
-            slot = record['slot_id'].replace('_', ' ')
-            status = 'occupied' if record['status'] == 1 else 'empty'
-            time_elapsed = timestamp - float(record['since']) if status == 'occupied' else 0
-            slot_status.append((slot, status, time_elapsed))
-        sorted(slot_status, key=lambda x: x[0])
-        cls._pprint(slot_status)
+    def __init__(self,
+                 features=None,
+                 width=None):
+        if features is None:
+            features = ['slot_id', 'status', 'duration', 'violation', 'msg']
+            width = [20, 10, 10, 10, 30]
+        self.features = features
+        self.width = width
 
-    @classmethod
-    def _pprint(cls, slot_status):
+    def print(self, records):
+        info = []
+        for record in records:
+            line = [record[column] for column in self.features]
+            info.append(line)
+        self._pprint(info)
+
+    def _pprint(self, slot_status):
         os.system('cls||clear')
-        cls._print_msg_box('Parking monitoring in progress',
-                           title='Parking time analysis',
-                           indent=4,
-                           width=50)
-        header = '\t| {0: <20} | {1: <10} | {2: <20} |'.format(*['slot_id', 'status', 'parked time (secs)'])
+        self._print_msg_box('Parking monitoring in progress',
+                            title='Parking time analysis',
+                            indent=4,
+                            width=sum(self.width))
+        line_format = '\t'
+        for i, w in enumerate(self.width):
+            line_format += '| {{{}: <{}}} |'.format(i, w)
+        header = line_format.format(*self.features)
         print('\t' + '-' * len(header))
         print(header)
         print('\t' + '-' * len(header))
         for line in slot_status:
-            string = '\t| {0: <20} | {1: <10} | {2: <20} |'.format(*line)
+            #print(line)
+            string = line_format.format(*line)
             print(string)
         print('\t' + '-' * len(header))
 

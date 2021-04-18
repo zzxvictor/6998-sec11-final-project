@@ -15,7 +15,7 @@ class VideoAnalyzer:
                  signature_path,
                  s3_bucket,
                  dynamo_db,
-                 video_name='100th st'):
+                 video_name='100th St'):
         self.classifier_path = classifier_path
         self.signature_path = signature_path
         self.s3_bucket = s3_bucket
@@ -29,11 +29,12 @@ class VideoAnalyzer:
 
         self.detector = LoadModelTF.load_model(classifier_path)
         self.signature = None
+        #self.signature = LoadModelTorch.load_model(signature_path)
 
     def record(self, img_dict, timestamp):
         records, imgs = [], []
         slot_ids = list(sorted(img_dict.keys()))
-        slot_names = ['_'.join([self.video_name, 'slot', slot_id]) for slot_id in slot_ids]
+        slot_names = ['_'.join([self.video_name, slot_id]) for slot_id in slot_ids]
         for slot_id in slot_ids:
             img = cv2.resize(img_dict[slot_id], DETECTOR_IMG_SIZE) / 255.0 - 0.5
             imgs.append(img)
