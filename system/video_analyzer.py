@@ -5,7 +5,7 @@ import cv2
 from decimal import Decimal
 import io
 import matplotlib.image as mpimg
-from system.model_loader import LoadModelTF
+from system.model_loader import LoadModelTorch
 from configs.config import DETECTOR_IMG_SIZE
 
 
@@ -27,7 +27,7 @@ class VideoAnalyzer:
         self.s3_resource = boto3.resource('s3')
         self._purge()
 
-        self.detector = LoadModelTF.load_model(classifier_path)
+        #self.detector = LoadModelTF.load_model(classifier_path)
         self.signature = None
         #self.signature = LoadModelTorch.load_model(signature_path)
 
