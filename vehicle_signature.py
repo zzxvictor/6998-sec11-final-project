@@ -1,3 +1,4 @@
+
 # <<<<<<< Updated upstream
 # from utils.data_loader import  DataLoader4Signature
 # from configs import constants
@@ -15,6 +16,7 @@
 #         plt.title(str(idx) + ':'+ str(labels[1]))
 #         plt.show()
 # =======
+
 from utils.data_loader import DataLoader4Signature
 import numpy as np
 import pandas as pd
@@ -73,4 +75,3 @@ print("Device:", device)
 model = train()
 torch.save(model.state_dict(), "model.pt")
 print("Model Saved Successfully")
-
