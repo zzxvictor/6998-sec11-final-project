@@ -10,6 +10,7 @@ from configs.config import DETECTOR_IMG_SIZE
 from vehicle_detection.torch_detector import TorchDetector
 from vehicle_signature.siamese import SiameseNetwork
 import torch
+import matplotlib.pyplot as plt
 
 
 class VideoAnalyzer:
@@ -74,7 +75,12 @@ class VideoAnalyzer:
         return records
 
     def _classify(self, imgs):
+
         pred = self.detector(torch.from_numpy(imgs).float()).reshape(-1)
+        # imgs = torch.from_numpy(imgs).float()
+        # plt.imshow(np.transpose(imgs[0] + 0.5, axes=[1, 2, 0]))
+        # plt.show()
+        # print(pred)
         return pred >= 0.5
 
     def _signature(self, img1, img2):

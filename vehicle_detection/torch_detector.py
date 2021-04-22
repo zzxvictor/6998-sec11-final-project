@@ -12,7 +12,6 @@ from operator import __add__
 def compute_padding(k):
     return (k - 1) // 2
 
-
 class TorchDetector(nn.Module):
     def __init__(self):
         super(TorchDetector, self).__init__()
@@ -29,15 +28,16 @@ class TorchDetector(nn.Module):
 
         # Defining the fully connected layers
         self.fc1 = nn.Sequential(
+            nn.Flatten(),
             nn.Linear(92416, 20),
             nn.ReLU(inplace=True),
-            nn.Linear(20, 1), 
+            nn.Linear(20, 1),
             nn.Sigmoid()
         )
 
     def forward(self, x):
         # Forward pass
         output = self.cnn1(x)
-        output = output.view(output.size(0), -1)
+        # output = torch.reshape(output, (output.size(0), -1))
         output = self.fc1(output)
         return output

@@ -42,13 +42,13 @@ class EnforcementLogic:
 
     def _check_np_violation(self, record):
         if record['duration'] >= self.max_np:
-            return True, 'No parking violation!'
+            return True, 'NP zone violation!'
         else:
             return False, ''
 
     def _check_slot_violation(self, record):
         if record['duration'] >= self.max_slot:
-            return True, 'overtime parking!'
+            return True, 'overtime parking violation!'
         else:
             return False, ''
 

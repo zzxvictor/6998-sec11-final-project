@@ -10,6 +10,7 @@ class VideoReader:
                  video_path,
                  annotation_path,
                  fps=30,
+                 scan_freq=10,
                  delimiter=' '):
         self.video_path = video_path
         if os.path.isfile(annotation_path):
@@ -17,6 +18,7 @@ class VideoReader:
         else:
             self.annotation = None
         self.fps = fps
+        self.scan_freq = scan_freq
 
     def start(self):
         frames = self._read_video(self.video_path, self.annotation)
@@ -26,9 +28,11 @@ class VideoReader:
                 return
             if counter % self.fps == 0:
                 self._display_slot_location(img, self.annotation, counter / self.fps)
+                if counter == 0:
+                    cv2.waitKey(100000)
                 if cv2.waitKey(25) & 0xFF == ord('q'):
                     break
-            if counter % (5 * self.fps) == 0:
+            if counter % (self.scan_freq * self.fps) == 0:
                 img_dict = self._extra_slot(img, self.annotation)
                 yield img_dict, counter / self.fps
 
