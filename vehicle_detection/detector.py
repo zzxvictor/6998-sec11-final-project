@@ -12,5 +12,5 @@ def get_detector():
     model.add(layers.MaxPool2D())
     model.add(layers.Flatten())
     model.add(layers.Dense(20, activation='relu'))
-    model.add(layers.Dense(1))
+    model.add(layers.Dense(1, activation='sigmoid'))
     return model

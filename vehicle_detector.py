@@ -1,16 +1,13 @@
-import constants
+from configs import config
 from utils.data_loader import DataLoader4Detector
 from utils.callbacks import Logger, LrStepDecay
 from vehicle_detection import detector
 import tensorflow.keras as tfk
-import matplotlib.pyplot as plt
-import numpy as np
-
 
 MODEL_NAME = 'simple_cnn'
 if __name__ == '__main__':
-    data_loader = DataLoader4Detector(constants.DATA_ROOT,
-                                      constants.ANNOTATION_FILES)
+    data_loader = DataLoader4Detector(config.DATA_ROOT,
+                                      config.ANNOTATION_FILES)
     train, val = data_loader.load(batch_size=32, repeat=True)
     # for imgs, labels in train:
         # print(np.max(imgs), np.min(imgs))
@@ -19,7 +16,7 @@ if __name__ == '__main__':
         # plt.show()
     model = detector.get_detector()
 
-    model.compile(loss=tfk.losses.BinaryCrossentropy(from_logits=False),
+    model.compile(loss=tfk.losses.BinaryCrossentropy(from_logits=True),
                   optimizer=tfk.optimizers.Adam(5e-5),
                   metrics=['accuracy'])
 

@@ -105,8 +105,8 @@ class DataLoader4Detector(DataLoader):
              repeat=False,
              ratio=0.2,
              seed=123,
-             brightness_delta=0.05,
-             contrast_factor=0.8,
+             brightness_delta=0.0,
+             contrast_factor=0.1,
              img_size=150):
 
         self.brightness_delta = brightness_delta
@@ -131,11 +131,13 @@ class DataLoader4Detector(DataLoader):
 
     def _parse_record(self, line, train):
         outputs = tf.strings.split(line, sep=' ')
+        tf.print(line)
         img_path, label = outputs[0], outputs[1]
         img_path = tf.strings.join(inputs=[self.data_root, 'PATCHES/', img_path])
         img = self._load_img(img_path, self.img_size, self.img_size)
         # add noise
         if train:
+            pass
             img = tf.image.random_brightness(img, max_delta=self.brightness_delta)
             img = tf.image.random_contrast(img, lower=self.contrast_factor,
                                            upper=1 / self.contrast_factor)
